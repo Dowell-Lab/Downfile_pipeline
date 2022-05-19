@@ -35,6 +35,7 @@ def helpMessage() {
          
     Input File options:
         --singleEnd                    Specifies that the input files are not paired reads (default is paired-end).
+        --r1_five_prime                Specifies that for PE reads, the 5' end is on read 1 (default is read 2)
         
     Save options:
         --outdir                       Specifies where to save the output from the nextflow run.
@@ -141,7 +142,6 @@ try {
  * Parse software version numbers
  */
 process get_software_versions {
-    validExitStatus 0,1,127
     time '1h'
 
     output:
@@ -149,14 +149,12 @@ process get_software_versions {
 
     script:
     """
-    printf "visfilegen_version: %s\n" ${params.version}
+    printf "downfilegen_version: %s\n" ${params.version}
     printf "nextflow_version: %s\n" ${workflow.nextflow.version}
     printf "samtools_version: %s\n" \$(samtools --version | head -1 | awk '{print \$NF}')
     printf "java_version: %s\n" \$(java -version 2>&1 | head -1 | awk -F '"' '{print \$2}')
     printf "bedtools_version: %s\n" \$(bedtools --version | head -1 | awk -F " v" '{print \$2}')
     printf "igvtools_version: %s\n" \$(igvtools version | head -1 | awk '{print \$3}')
-    printf "seqkit_version: %s\n" \$(seqkit version | head -1 | awk -F " v" '{print \$2}')
-    printf "mpich_version: %s\n" \$(mpichversion | head -1 | awk '{print \$NF}')
     printf "gcc_version: %s\n" \$(gcc --version | head -1 | awk '{print \$NF}')
     printf "python_version: %s\n" \$(python3 --version | head -1 | awk '{print \$NF}')
     printf "pipeline_hash: %s\n" ${workflow.scriptId}
@@ -211,7 +209,7 @@ process samtools {
     cpus 16
     publishDir "${params.outdir}" , mode: 'copy',
     saveAs: {filename ->
-        else if (filename.indexOf("flagstat") > 0)                          "mapstats/$filename"
+        if (filename.indexOf("flagstat") > 0)                               "mapstats/$filename"
         else if (filename.indexOf("millionsmapped") > 0)                    "mapstats/$filename"
         else null            
     }
@@ -269,9 +267,9 @@ process tfit_bedgraphs {
     memory '40 GB'
     time '4h'
 
-    publishDir "{$params.outdir}/mapped/bedgraphs_tfit", mode: 'copy', pattern: "${prefix}.bedGraph"
-    publishDir "{$params.outdir}/mapped/bedgraphs_fstitch", mode: 'copy', pattern: "${prefix}.pos.bedGraph"
-    publishDir "{$params.outdir}/mapped/bedgraphs_fstitch", mode: 'copy', pattern: "${prefix}.neg.bedGraph"
+    publishDir "${params.outdir}/mapped/bedgraphs_tfit", mode: 'copy', pattern: "${prefix}.bedGraph"
+    publishDir "${params.outdir}/mapped/bedgraphs_fstitch", mode: 'copy', pattern: "${prefix}.pos.bedGraph"
+    publishDir "${params.outdir}/mapped/bedgraphs_fstitch", mode: 'copy', pattern: "${prefix}.neg.bedGraph"
 
     when:
     params.saveall || params.savetfitbg
@@ -385,8 +383,14 @@ process norm_bedgraphs {
     memory '40 GB'
     time '4h'
 
-    publishDir { params.saveall ? "$params.outdir/mapped/bedgraphs_norm", mode: 'copy', pattern: "${prefix}.rcc.bedGraph" : false }
-    publishDir { params.savebg ? "$params.outdir/mapped/bedgraphs_norm", mode: 'copy', pattern: "${prefix}.rcc.bedGraph" : false }
+    publishDir "${params.outdir}" , mode: 'copy',
+    saveAs: {filename ->
+        if ((params.saveall || params.bg) && (filename == "${prefix}.rcc.bedGraph"))    "mapped/bedgraphs_norm/$filename"
+        else null
+    }
+
+//    publishDir path: {params.saveall ? "${params.outdir}/mapped/bedgraphs_norm" : null}, mode: 'copy', pattern: "${prefix}.rcc.bedGraph"
+//    publishDir path: {params.savebg ? "${params.outdir}/mapped/bedgraphs_norm" : null}, mode: 'copy', pattern: "${prefix}.rcc.bedGraph"
 
     when:
     params.saveall || params.savebg || params.savebw || params.savetdf
@@ -536,7 +540,7 @@ process normalized_bigwigs {
     memory '10 GB'
     queue 'short'
 
-    publishDir "${params.outdir}/mapped/bigwig_norm", mode: 'copy', pattern: "*.bw"
+    publishDir "${params.outdir}/mapped/bigwigs_norm", mode: 'copy', pattern: "*.bw"
 
     when:
     params.saveall || params.savebw
@@ -567,14 +571,14 @@ process dreg_prep {
     cpus 16
     queue 'short'
 
-    publishDir "${params.outdir}/mapped/bigwig_dreg", mode: 'copy', pattern: "*.bw"
-    publishDir "${params.outdir}/mapped/bedgraph_dreg", mode: 'copy', pattern: "${prefix}.bedGraph"
+    publishDir "${params.outdir}/mapped/bigwigs_dreg", mode: 'copy', pattern: "*.bw"
+    publishDir "${params.outdir}/mapped/bedgraphs_dreg", mode: 'copy', pattern: "${prefix}.bedGraph"
 
     when:
     params.saveall || params.savedreg
 
     input:
-    set val(prefix), file(bamfile) from bam_for_dreg
+    tuple val(prefix), file(bamfile) from bams_for_dreg
 
     output:
     tuple val(prefix), file("${prefix}.pos.bw"), file("${prefix}.neg.bw") into dreg_bigwig
@@ -710,7 +714,7 @@ process dreg_prep {
 
 process igvtools {
     println "Log[5]: Generating TDFs"
-    tag "$name"
+    tag "$prefix"
     memory '30 GB'
     time '1h'
     queue 'short'
