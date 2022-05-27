@@ -13,8 +13,8 @@
 Pipeline steps:
     1. SAMtools -- convert CRAM file to BAM and extract millions mapped value
     2. BEDtools -- make normalized and non-normalized bedgraphs
-    3. BEDtools and kentUtils -- make normalized bigwigs for genome browser
-    4. BEDtools and kentUtils -- make 5' bigwigs for dREG
+    3. BEDtools -- make normalized bigwigs for genome browser
+    4. BEDtools -- make 5' bigwigs for dREG
     5. IGV Tools -- make tdfs for genome browser
 */
 
@@ -209,8 +209,8 @@ process samtools {
     cpus 16
     publishDir "${params.outdir}" , mode: 'copy',
     saveAs: {filename ->
-        if (filename.indexOf("flagstat") > 0)                               "mapstats/$filename"
-        else if (filename.indexOf("millionsmapped") > 0)                    "mapstats/$filename"
+             if (filename.indexOf("flagstat") > 0)             "mapstats/$filename"
+        else if (filename.indexOf("millionsmapped") > 0)       "mapstats/$filename"
         else null            
     }
 
@@ -220,6 +220,7 @@ process samtools {
     output:
     tuple val(prefix), file("${prefix}.sorted.bam"), file("${prefix}.millionsmapped") into bams_for_bedgraph
     tuple val(prefix), file("${prefix}.sorted.bam") into bams_for_tfit_conv, bams_for_dreg
+    tuple val(prefix), file("${prefix}.flagstat") into flagstats
 
     script:
     """
@@ -385,7 +386,7 @@ process norm_bedgraphs {
 
     publishDir "${params.outdir}" , mode: 'copy',
     saveAs: {filename ->
-        if ((params.saveall || params.bg) && (filename == "${prefix}.rcc.bedGraph"))    "mapped/bedgraphs_norm/$filename"
+        if ((params.saveall || params.savebg) && (filename == "${prefix}.rcc.bedGraph"))    "mapped/bedgraphs_norm/$filename"
         else null
     }
 
@@ -575,7 +576,7 @@ process dreg_prep {
     publishDir "${params.outdir}/mapped/bedgraphs_dreg", mode: 'copy', pattern: "${prefix}.bedGraph"
 
     when:
-    params.saveall || params.savedreg
+    params.saveall || params.savedregbw
 
     input:
     tuple val(prefix), file(bamfile) from bams_for_dreg
