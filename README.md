@@ -55,7 +55,8 @@ Each run of the Downfile_pipeline requires a configuration file which specifies 
 
     Input File options:
         --singleEnd                    Specifies that the input files are not paired reads (default is paired-end).
-        --r1_five_prime                If input file is paired, specifies if read 1 has the 5 prime end (default R2 is five prime, must be manually determined)
+        --r1_five_prime                (for dREG bigwig prep only) If input file is paired, specifies if read 1 has the 5 prime end
+                                       (default R2 is five prime, must be manually determined)
 
     Save options:
         --outdir                       Specifies where to save the output from the nextflow run.

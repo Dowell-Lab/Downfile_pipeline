@@ -1,11 +1,11 @@
 #!/usr/bin/env nextflow
 /*
 ========================================================================================
-                     Downstream File Generation Nextflow Pipeline
+                     Downfile Nextflow Pipeline
 ========================================================================================
  Started 2022-05-18.
  #### Homepage / Documentation
- https://github.com/Dowell-Lab/downstream_file_generate
+ https://github.com/Dowell-Lab/Downfile_pipeline
  #### Authors
  Lynn Sanford <lynn.sanford@colorado.edu>
 ========================================================================================
@@ -21,9 +21,9 @@ Pipeline steps:
 
 def helpMessage() {
     log.info"""
-    ===========================================================
-     Downstream File Generation Pipeline v${params.version}
-    ===========================================================
+    =======================================
+     Downfile Pipeline v${params.version}
+    =======================================
     Usage:
     The typical command for running the pipeline is as follows:
     nextflow run main.nf -profile slurm --crams '/project/*.cram' --outdir '/project/'
@@ -90,11 +90,11 @@ software_versions = Channel.create()
 
 
 // Header log info
-log.info """=======================================================
-Downstream File Generate v${params.version}"
-======================================================="""
+log.info """========================================
+Downfile Pipeline v${params.version}"
+========================================"""
 def summary = [:]
-summary['Pipeline Name']    = 'Downstream File Generate'
+summary['Pipeline Name']    = 'Downfile Pipeline'
 summary['Help Message']     = params.help
 summary['Pipeline Version'] = params.version
 summary['Run Name']         = custom_runName ?: workflow.runName
@@ -149,7 +149,7 @@ process get_software_versions {
 
     script:
     """
-    printf "downfilegen_version: %s\n" ${params.version}
+    printf "downfile_version: %s\n" ${params.version}
     printf "nextflow_version: %s\n" ${workflow.nextflow.version}
     printf "samtools_version: %s\n" \$(samtools --version | head -1 | awk '{print \$NF}')
     printf "java_version: %s\n" \$(java -version 2>&1 | head -1 | awk -F '"' '{print \$2}')
@@ -791,6 +791,6 @@ workflow.onComplete {
     def output_tf = new File( output_d, "pipeline_report_downfile_${workflow.runName}.txt" )
     output_tf.withWriter { w -> w << report_txt }
 
-    log.info "Downstream File Generation Pipeline Complete"
+    log.info "Downfile Pipeline Complete"
 
 }
