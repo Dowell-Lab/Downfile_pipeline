@@ -218,15 +218,15 @@ process samtools {
     tuple val(prefix), file(bamfile) from bamfiles
 
     output:
-    tuple val(prefix), file("${prefix}.sorted.bam"), file("${prefix}.millionsmapped") into bams_for_bedgraph
-    tuple val(prefix), file("${prefix}.sorted.bam") into bams_for_tfit_conv, bams_for_dreg
+    tuple val(prefix), file("${prefix}.s.bam"), file("${prefix}.millionsmapped") into bams_for_bedgraph
+    tuple val(prefix), file("${prefix}.s.bam") into bams_for_tfit_conv, bams_for_dreg
     tuple val(prefix), file("${prefix}.flagstat") into flagstats
 
     script:
     """
-    samtools sort -@ 16 ${bamfile} > ${prefix}.sorted.bam
-    samtools flagstat ${prefix}.sorted.bam > ${prefix}.flagstat
-    samtools view -@ 16 -F 0x904 -c ${prefix}.sorted.bam > ${prefix}.millionsmapped
+    samtools sort -@ 16 ${bamfile} > ${prefix}.s.bam
+    samtools flagstat ${prefix}.s.bam > ${prefix}.flagstat
+    samtools view -@ 16 -F 0x904 -c ${prefix}.s.bam > ${prefix}.millionsmapped
     """
 }
 
