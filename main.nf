@@ -224,7 +224,12 @@ process samtools {
 
     script:
     """
-    samtools sort -@ 16 ${bamfile} > ${prefix}.downfilepipe.sorted.bam
+    sorttype=\$(samtools view -H ${bamfile} | grep SO | awk -F'SO:' '{print \$2}')
+    if [[ "\$sorttype" != "coordinate" ]]; then
+        samtools sort -@ 16 ${bamfile} > ${prefix}.downfilepipe.sorted.bam
+    else
+        rsync -a ${bamfile} ${prefix}.downfilepipe.sorted.bam
+    fi
     samtools flagstat ${prefix}.downfilepipe.sorted.bam > ${prefix}.flagstat
     samtools view -@ 16 -F 0x904 -c ${prefix}.downfilepipe.sorted.bam > ${prefix}.millionsmapped
     """
