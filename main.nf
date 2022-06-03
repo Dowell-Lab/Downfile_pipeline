@@ -39,6 +39,7 @@ def helpMessage() {
         
     Save options:
         --outdir                       Specifies where to save the output from the nextflow run.
+        --savebam                      Saves sorted bam files
         --savebg                       Saves normalized bedgraphs.
         --savetfitbg                   Saves non-normalized and multimapped read filtered bedgraphs for Tfit/FStitch
         --savebw                       Saves normalized bigwigs for visualization.
@@ -103,6 +104,7 @@ if(params.bams) summary['BAMs']              = params.bams
 summary['Genome Ref']       = params.genome
 summary['Chromosome sizes'] = params.chrom_sizes
 summary['Data Type']        = params.singleEnd ? 'Single-End' : 'Paired-End'
+summary['Save bams']        = params.savebam ? 'YES' : params.saveall ? 'YES' : 'NO'
 summary['Save bedgraphs']   = params.savebg ? 'YES' : params.saveall ? 'YES' : 'NO'
 summary['Save tfit bedgraphs']               = params.savetfitbg ? 'YES' : params.saveall ? 'YES' : 'NO'
 summary['Save vis bigwigs'] = params.savebw ? 'YES' : params.saveall ? 'YES' :'NO'
@@ -211,7 +213,8 @@ process samtools {
     saveAs: {filename ->
              if (filename.indexOf("flagstat") > 0)             "mapstats/$filename"
         else if (filename.indexOf("millionsmapped") > 0)       "mapstats/$filename"
-        else null            
+        else if ((params.saveall || params.savebam) && (filename == "${prefix}.downfilepipe.sorted.bam"))    "mapped/bams/${prefix}.sorted.bam"
+        else null
     }
 
     input:
