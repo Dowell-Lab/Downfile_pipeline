@@ -25,6 +25,10 @@ Check each tool for configuration requirements.
 
 Each run of the Downfile_pipeline requires a configuration file which specifies genome-specific variables for CRAM/BAM and bedgraph manipulation. Edit the configuration file to reflect the correct cluster paths for genome and chromosome size files.
 
+## Mapped file inputs
+
+In order to output bedgraphs for Tfit, we filter out multimapped reads based on the NH:i: field. Bedgraphs will not be generated properly for mappers that do not output this field, such as Bowtie2. If you have mapped files that do not contain this tag, you can filter based on the XS:i: tag. This involves switching which version of the script is commented out (using // comment characters) within the `bam_conversion_tfit` process.
+
 ## Loading requirements on SLURM
 
   Below is a summary of all FIJI modules needed to run Downfile_pipeline.

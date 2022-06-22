@@ -261,6 +261,13 @@ process bam_conversion_tfit {
         grep -P '(NH:i:1|^@)' | \
         samtools view -h -b > ${prefix}.mmfilt.sorted.bam
     """
+
+//    script:
+//    """
+//    samtools view -@ 16 -h -q 1 ${bam} | \
+//        grep -v 'XS:i' | \
+//        samtools view -h -b > ${prefix}.mmfilt.sorted.bam
+//    """
 }
 
 /*
